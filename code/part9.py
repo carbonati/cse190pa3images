@@ -24,6 +24,7 @@ from keras import backend as K
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 
+# Normalizatoin
 #X_train = X_train / 255.0
 #X_test = X_test / 255.0
 
@@ -41,11 +42,9 @@ model.add(Convolution2D(32, 3, 3, activation='relu', border_mode='same', W_const
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Convolution2D(32, 3, 3, activation='relu', border_mode='same',W_constraint=maxnorm(3)))
 model.add(Dropout(0.4))
-#model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Convolution2D(32, 3, 3, activation='relu', border_mode='same',W_constraint=maxnorm(3)))
 model.add(Dropout(0.4))
 model.add(Convolution2D(32, 3, 3, activation='relu', border_mode='same',W_constraint=maxnorm(3)))
-#model.add(Dropout(0.5))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Flatten())
 model.add(Dense(1024, activation='relu', W_constraint=maxnorm(3)))
@@ -56,32 +55,15 @@ model.add(Dense(num_classes, activation='softmax'))
 # Compile model
 print(model.summary())
 
+# Hyperparameters
 epochs = 1
 lrate = 0.01
 decay = lrate/epochs
 sgd = SGD(lr=lrate, momentum=0.9, decay=decay, nesterov=False)
 model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
-# Fit model
-"""
-# Fit model with image 
-datagen = ImageDataGenerator(
-    featurewise_center=False,
-    featurewise_std_normalization=False,
-    )
-
-# compute quantities (std dev, mean, principal components) for feature normalization
-datagen.fit(X_train)
-
-model.fit_generator(datagen.flow(X_train,y_train),samples_per_epoch=len(X_train), nb_epoch=25)
-
-"""
-
 # Evaluate model
-#scores = model.evaluate(X_test, y_test, verbose=0)
-#print "Accuracy: %.2f%%" % (scores[1] * 100)
 model.fit(X_train, y_train, batch_size=64, nb_epoch=epochs, validation_data=(X_test, y_test))
-#print(hist.history.keys())
 
 # pull out the weights from the evaluated models
 layer_dict = dict([(layer.name, layer) for layer in model.layers])
@@ -97,8 +79,6 @@ model.add(Convolution2D(32, 3, 3, activation ='relu', border_mode = 'same', W_co
 layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
 # substitue in the pretrained weights
-print model.summary()
-
 layer_dict['convolution2d_7'].set_weights(weights_conv_1)
 layer_dict['convolution2d_8'].set_weights(weights_conv_2)
 
@@ -108,6 +88,7 @@ filter_index = 1
 first_layer = model.layers[-1]
 input_img = first_layer.input
 
+# visualize each filter for the 1st and 2nd layer
 for filter_index in xrange(32):
     # build a loss function that maximizes the activation
     # of the nth filter of the layer considered
